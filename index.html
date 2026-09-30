@@ -249,7 +249,9 @@
   // ─────────────────────────────────────────────────────────────
   // CONFIGURAÇÃO — trocar estes dois valores ao publicar de verdade
   // ─────────────────────────────────────────────────────────────
-  var CSV_URL  = "";  // URL do "Publicar na web > CSV" da aba ESTOQUE
+  // URL do "Publicar na web > CSV" da aba ESTOQUE.
+  // Verificado: responde text/csv e manda Access-Control-Allow-Origin: *
+  var CSV_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXfRnuTXZ7whr4Jw5DVmnSE0I6ho3gvjPtxLDFlPs3PLetfmbSPXqoSfAcf_loLzYmuSghxQCbL3wE/pub?gid=1717554805&single=true&output=csv";
   var URL_FOTO = "fotos/";  // pasta das fotos, no mesmo site
   var RECARGA_MS = 60000;   // relê a planilha a cada 60 s
   var VELHO_MS   = 600000;  // 10 min sem conseguir reler = carimbo de DESATUALIZADO
