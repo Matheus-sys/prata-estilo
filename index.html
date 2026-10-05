@@ -336,14 +336,14 @@
 
   // ─────────── dados de exemplo (só enquanto a planilha não está ligada) ───────────
   var DEMO = [
-    { cod:"AN-0142", nome:"Anel coração vazado",        cat:"Anel",     teor:"Prata 925",                          peso:"3,40", tam:"16",    colecao:"Minimal 2026", forn:"Ourivesaria Lima", preco:"129,00", qtd:12 },
-    { cod:"AN-0209", nome:"Anel liso largo",            cat:"Anel",     teor:"Prata 950",                          peso:"5,10", tam:"18",    colecao:"Essencial",    forn:"Ourivesaria Lima", preco:"119,00", qtd:0  },
-    { cod:"BR-0087", nome:"Brinco coração pequeno",     cat:"Brinco",   teor:"Prata 925",                          peso:"1,80", tam:"—",     colecao:"Minimal 2026", forn:"Prata Viva",       preco:"89,00",  qtd:2  },
-    { cod:"BR-0301", nome:"Brinco argola texturizada",  cat:"Brinco",   teor:"Prata 925 com banho de ouro 18k",    peso:"2,60", tam:"25 mm", colecao:"Solar",        forn:"Prata Viva",       preco:"149,00", qtd:1  },
-    { cod:"CO-0055", nome:"Colar veneziana fina",       cat:"Colar",    teor:"Prata 925",                          peso:"4,20", tam:"45 cm", colecao:"Essencial",    forn:"Ourivesaria Lima", preco:"179,00", qtd:7  },
-    { cod:"PI-0311", nome:"Pingente coração zircônia",  cat:"Pingente", teor:"Prata 925",                          peso:"2,10", tam:"—",     colecao:"Minimal 2026", forn:"Prata Viva",       preco:"149,00", qtd:4  },
-    { cod:"PU-0198", nome:"Pulseira elos corações",     cat:"Pulseira", teor:"Prata 925",                          peso:"6,80", tam:"19 cm", colecao:"Minimal 2026", forn:"Casa Prata",       preco:"229,00", qtd:9  },
-    { cod:"PU-0244", nome:"Pulseira berloque lisa",     cat:"Pulseira", teor:"Prata 925 com banho de ródio",       peso:"7,40", tam:"18 cm", colecao:"Solar",        forn:"Casa Prata",       preco:"259,00", qtd:2  }
+    { cod:"AN-0142", nome:"Anel coração vazado",        cat:"Anel",     teor:"Ouro 18k",                           peso:"3,40", tam:"16",    colecao:"Minimal 2026", forn:"Ourivesaria Lima", preco:"129,00", qtd:12 },
+    { cod:"AN-0209", nome:"Anel liso largo",            cat:"Anel",     teor:"Ouro",                               peso:"5,10", tam:"18",    colecao:"Essencial",    forn:"Ourivesaria Lima", preco:"119,00", qtd:0  },
+    { cod:"BR-0087", nome:"Brinco coração pequeno",     cat:"Brinco",   teor:"Ouro 10k",                           peso:"1,80", tam:"—",     colecao:"Minimal 2026", forn:"Prata Viva",       preco:"89,00",  qtd:2  },
+    { cod:"BR-0301", nome:"Brinco argola texturizada",  cat:"Brinco",   teor:"Ouro 18k",                           peso:"2,60", tam:"25 mm", colecao:"Solar",        forn:"Prata Viva",       preco:"149,00", qtd:1  },
+    { cod:"CO-0055", nome:"Colar veneziana fina",       cat:"Colar",    teor:"Ouro 18k",                           peso:"4,20", tam:"45 cm", colecao:"Essencial",    forn:"Ourivesaria Lima", preco:"179,00", qtd:7  },
+    { cod:"PI-0311", nome:"Pingente coração zircônia",  cat:"Pingente", teor:"Ouro 10k",                           peso:"2,10", tam:"—",     colecao:"Minimal 2026", forn:"Prata Viva",       preco:"149,00", qtd:4  },
+    { cod:"PU-0198", nome:"Pulseira elos corações",     cat:"Pulseira", teor:"Ouro",                               peso:"6,80", tam:"19 cm", colecao:"Minimal 2026", forn:"Casa Prata",       preco:"229,00", qtd:9  },
+    { cod:"PU-0244", nome:"Pulseira berloque lisa",     cat:"Pulseira", teor:"Ouro 18k",                           peso:"7,40", tam:"18 cm", colecao:"Solar",        forn:"Casa Prata",       preco:"259,00", qtd:2  }
   ];
 
   function montarDemo() {
@@ -360,6 +360,47 @@
     ultimaLeitura = new Date();
   }
 
+  // ─────────── achar as colunas pelo NOME do cabeçalho ───────────
+  //
+  // Antes isto lia por posição fixa (F = peso, G = tamanho). No dia em que
+  // alguém trocou duas colunas de lugar na planilha, a vitrine passou a
+  // mostrar o peso no lugar do tamanho — sem erro nenhum, só errado.
+  //
+  // Lendo pelo nome do cabeçalho, reordenar colunas deixa de quebrar. A
+  // posição fica só como rede de segurança para quando o cabeçalho sumir
+  // (já aconteceu: a célula de Qtd_Atual virou #REF! e perdeu o título).
+  var COLUNAS = {
+    cod:     { nomes: ["codigo"],                  pos: 1 },
+    nome:    { nomes: ["nome"],                    pos: 2 },
+    cat:     { nomes: ["categoria"],               pos: 3 },
+    teor:    { nomes: ["teor", "material"],        pos: 4 },
+    peso:    { nomes: ["peso g", "peso", "pesog"], pos: 6 },
+    tam:     { nomes: ["tamanho aro", "tamanho", "aro"], pos: 5 },
+    colecao: { nomes: ["colecao"],                 pos: 7 },
+    forn:    { nomes: ["fornecedor"],              pos: 8 },
+    preco:   { nomes: ["preco venda", "preco"],    pos: 9 },
+    ativo:   { nomes: ["ativo"],                   pos: 11 },
+    qtd:     { nomes: ["qtd atual", "qtd", "quantidade"], pos: 14 }
+  };
+
+  function mapearColunas(cabecalho) {
+    var limpo = cabecalho.map(function (c) {
+      return String(c || "").normalize("NFD").replace(/[̀-ͯ]/g, "")
+        .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    });
+    var mapa = {};
+    for (var campo in COLUNAS) {
+      if (!COLUNAS.hasOwnProperty(campo)) continue;
+      var achou = -1;
+      var nomes = COLUNAS[campo].nomes;
+      for (var n = 0; n < nomes.length && achou < 0; n++) {
+        achou = limpo.indexOf(nomes[n]);
+      }
+      mapa[campo] = achou >= 0 ? achou : COLUNAS[campo].pos;
+    }
+    return mapa;
+  }
+
   // ─────────── carregar a planilha ───────────
   function carregar() {
     if (!CSV_URL) { if (!pecas.length) { montarDemo(); montarFiltros(); desenhar(); } return; }
@@ -368,19 +409,22 @@
       .then(function (txt) {
         var linhas = lerCSV(txt);
         if (linhas.length < 2) throw new Error("planilha vazia");
+        var c = mapearColunas(linhas[0]);
         var novas = [];
         for (var i = 1; i < linhas.length; i++) {
           var L = linhas[i];
-          var cod = (L[1] || "").trim();
+          function campo(k) { return String(L[c[k]] || "").trim(); }
+          var cod = campo("cod");
           if (!cod) continue;
-          if ((L[11] || "SIM").trim().toUpperCase() === "NÃO") continue;   // coluna L = Ativo
-          var qtd = parseInt((L[14] || "0").replace(/[^\d-]/g, ""), 10);   // coluna O = Qtd_Atual
+          if ((campo("ativo") || "SIM").toUpperCase() === "NÃO") continue;
+          var qtd = parseInt(campo("qtd").replace(/[^\d-]/g, ""), 10);
           novas.push({
-            cod: cod, nome: (L[2] || "").trim(), cat: (L[3] || "").trim(),
-            teor: (L[4] || "").trim(), peso: (L[5] || "").trim(), tam: (L[6] || "").trim(),
-            colecao: (L[7] || "").trim(), forn: (L[8] || "").trim(), preco: (L[9] || "").trim(),
+            cod: cod, nome: campo("nome"), cat: campo("cat"),
+            teor: campo("teor"), peso: campo("peso"), tam: campo("tam"),
+            colecao: campo("colecao"), forn: campo("forn"), preco: campo("preco"),
             qtd: isFinite(qtd) ? qtd : 0, temFoto: true,
-            busca: normalizar([cod, L[2], L[3], L[4], L[7], L[8], L[6]].join(" "))
+            busca: normalizar([cod, campo("nome"), campo("cat"), campo("teor"),
+                               campo("colecao"), campo("forn"), campo("tam")].join(" "))
           });
         }
         pecas = novas; ehDemo = false; elAviso.hidden = true;
