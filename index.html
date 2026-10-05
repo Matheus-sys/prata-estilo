@@ -300,6 +300,13 @@
     if (!isFinite(n)) return "—";
     return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
+  // A loja preenche so o que quer que apareca. Preco em branco some da tela
+  // em vez de virar um traco — traco parece defeito, ausencia parece escolha.
+  function temPreco(p) {
+    var n = parseFloat(String(p.preco).replace(/[^\d,.-]/g, "").replace(",", "."));
+    return isFinite(n) && n > 0;
+  }
+
   function hhmm(d) {
     return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
   }
@@ -541,7 +548,7 @@
                  '<span class="chip ' + e.cls + '">' + e.txt + "</span>" +
                  '<span class="cod">' + esc(p.cod) + "</span>" +
                  '<span class="nome">' + esc(p.nome) + "</span>" +
-                 '<span class="preco">' + dinheiro(p.preco) + "</span>" +
+                 (temPreco(p) ? '<span class="preco">' + dinheiro(p.preco) + "</span>" : "") +
                "</div>" +
              "</button>";
     }).join("");
@@ -574,7 +581,7 @@
       '<div class="ficha-cod">' + esc(p.cod) + "</div>" +
       '<div class="ficha-nome">' + esc(p.nome) + "</div>" +
       '<span class="chip ' + e.cls + '" style="font-size:13px;padding:5px 11px">' + e.txt + "</span>" +
-      '<div class="ficha-preco">' + dinheiro(p.preco) + "</div>" +
+      (temPreco(p) ? '<div class="ficha-preco">' + dinheiro(p.preco) + "</div>" : "") +
       '<ul class="atributos">' + attrs.map(function (a) {
         return "<li><span class=\"rot\">" + esc(a[0]) + '</span><span class="val">' + esc(a[1]) + "</span></li>";
       }).join("") + "</ul>" +
